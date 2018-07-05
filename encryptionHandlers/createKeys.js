@@ -7,7 +7,7 @@
 
 const { logRequest } = require( '../utilities/logRequest' );
 
-function getKeyCreationHandler( keystore ) {
+function getKeyCreationHandler( client, keystore ) {
     return function( req, res ) {
         logRequest( req );
 
@@ -23,6 +23,14 @@ function getKeyCreationHandler( keystore ) {
                 algorithms: keyPair.algorithms()
             };
             console.log( "\nResponse  : ", JSON.stringify( results, undefined, 4 ) );
+
+            if (client.connected) {
+                client.hset( "encryptionBusyBox::keystore", results.key.kid, JSON.stringify( results.key ), function (err, reply){
+                    console.log( "Create Key:: REDIS/YEDIS storage Error:: ", err);
+                    console.log( "Create Key:: REDIS/YEDIS storage Reply::", reply);
+                });
+            }
+
             res.send( results );
         } );
     };
