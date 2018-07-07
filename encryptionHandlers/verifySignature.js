@@ -9,7 +9,7 @@ const { logRequest } = require( '../utilities/logRequest' );
 
 function getSignatureVerifyingHandler( jose ) {
     return function( req, res ) {
-        logRequest( req );
+        //logRequest( req );
 
         if ( !req.body.publicKey ) {
             res.send( {

@@ -9,7 +9,7 @@ const { logRequest } = require( '../utilities/logRequest' );
 
 function getSigningHandler( jose ) {
     return function( req, res ) {
-        logRequest( req );
+        //logRequest( req );
 
         if ( !req.body.signingKey ) {
             res.send( {

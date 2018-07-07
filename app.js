@@ -6,31 +6,63 @@
  */
 
 const express = require( 'express' );
-const os = require( 'os' );
-//const opn = require('opn');
 const bodyParser = require( 'body-parser' );
 const app = express();
 
+const winston = require('winston');
+const expressWinston = require('express-winston');
+expressWinston.requestWhitelist.push('body');
+expressWinston.responseWhitelist.push('_headers');
+expressWinston.responseWhitelist.push('body');
+
+const winstonTransport = new winston.transports.Console({
+    json: true,
+    stringify: (obj) => {
+        let timestamp = new Date();
+        logLine = obj;
+        logLine.localeTime = timestamp.toLocaleString();
+        logLine.ISOTime = timestamp.toISOString();
+        return JSON.stringify( logLine );
+    },
+    level: 'debug',
+    colorize: true
+  });
+const logger = new winston.Logger ({ transports: [ winstonTransport ] });
+
+
 const { whereAmI } = require( './utilities/whereAmI' );
-const { getPublicKeys, getKeyPairs, createKeys, decryptJWE, encryptJWE, signJWT, verifySignature, deriveKey } = require( './encryptionHandlers' );
+let routeHandlers = require( './encryptionHandlers' );
+routeHandlers = routeHandlers.getExpressRouteHandlers(logger);
 
 // Setup Express Middleware handlers
 app.use( bodyParser.json() );
 app.use( express.static( 'static' ) );
 
+app.use(expressWinston.logger({
+    transports: [
+      winstonTransport
+    ],
+    meta: true
+}));
+
 // Setup API paths
 app.get( '/whereAmI', whereAmI );
-app.get( '/encryption/public-keys', getPublicKeys );
-app.get( '/encryption/key-pairs', getKeyPairs );
-app.post( '/encryption/key-pairs', createKeys );
-app.post( '/algorithms/hkdf', deriveKey );
-app.post( '/plaintext', decryptJWE );
-app.post( '/ciphertext', encryptJWE );
-app.post( '/signature', signJWT );
-app.post( '/verification', verifySignature );
+app.get( '/encryption/public-keys', routeHandlers.getPublicKeys );
+app.get( '/encryption/key-pairs', routeHandlers.getKeyPairs );
+app.post( '/encryption/key-pairs', routeHandlers.createKeys );
+app.post( '/algorithms/hkdf', routeHandlers.deriveKey );
+app.post( '/plaintext', routeHandlers.decryptJWE );
+app.post( '/ciphertext', routeHandlers.encryptJWE );
+app.post( '/signature', routeHandlers.signJWT );
+app.post( '/verification', routeHandlers.verifySignature );
+
+
+app.use(expressWinston.errorLogger({
+    transports: [
+        winstonTransport
+    ],
+    meta: true
+}));
 
 // Start the server and listen for requests
 app.listen( 3000 );
-
-// show where the web interface is located in the default browser
-//opn('http://localhost:3000/whereAmI');

@@ -1,11 +1,9 @@
-const { logRequest } = require('./logRequest');
 const nic = require('./networkInterfaceInfo');
 const webInterfaces = nic.getIp4Interfaces();
 const environment = JSON.stringify( process.env, null, 4 );
 const nodeVersion = JSON.stringify( process.release, null, 4);
 
 exports.whereAmI = function(req, res) {
-  logRequest(req);
   let showHowToFindMe = `
     <!DOCTYPE html>
     <html>

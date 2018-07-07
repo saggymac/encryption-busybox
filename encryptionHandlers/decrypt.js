@@ -4,17 +4,13 @@
  * Express handlers for decrypting jwe cypher text and returning plain text
  *
  */
-
-const { logRequest } = require( '../utilities/logRequest' );
-
 function getDecryptionHandler( jose ) {
     return function( req, res ) {
-        logRequest( req );
+        //logRequest( req );
         if ( !req.body.key ) {
             let results = {
                 "message": "No Decryption Key Supplied"
             };
-            console.log( "\nResponse  : ", JSON.stringify( results, undefined, 4 ) );
             res.send( results );
             return;
         }
@@ -23,7 +19,6 @@ function getDecryptionHandler( jose ) {
             let results = {
                 "message": "No JWE to decrypt"
             };
-            console.log( "\nResponse  : ", JSON.stringify( results, undefined, 4 ) );
             res.send( results );
             return;
         }
@@ -36,7 +31,6 @@ function getDecryptionHandler( jose ) {
                         let results = {
                             plaintext: result.plaintext.toString( 'utf8' )
                         };
-                        console.log( "\nResponse  : ", JSON.stringify( results, undefined, 4 ) );
                         res.send( results );
                     } );
             } );

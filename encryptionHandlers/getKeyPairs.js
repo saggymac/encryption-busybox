@@ -4,49 +4,56 @@
  * Express handlers for getting public keys and both key pairs
  *
  */
-
-const { logRequest } = require( '../utilities/logRequest' );
-
-function getKeyPairHandler( client, keystore, includePublicKeys ) {
+function getKeyPairHandler( logger, keystore, includePrivateKeys ) {
     return function( req, res ) {
-        logRequest( req );
-
-        if (client.connected && client.ready ) {
-            let localStorage = keystore.toJSON(true);
-            client.HLEN('encryptionBusyBox::keystore', function processHlenResponse(err, redisKeyCount){
-                console.log( "Get Keystore count:: REDIS/YEDIS storage Error:: ", err);
-                console.log( "Get Keystore count:: REDIS/YEDIS storage Reply::", redisKeyCount);
+        if (keystore.shared.connected && keystore.shared.ready ) {
+            let localStorage = keystore.local.toJSON(true);
+            keystore.shared.HLEN('encryptionBusyBox::keystore', function processHlenResponse(err, redisKeyCount){
+                logger.info( {
+                    message: {
+                        operation: "GET REDIS Key Count",
+                        error: err,
+                        keyCount: redisKeyCount
+                    }
+                });
                 if ( localStorage.keys.length != redisKeyCount){
-                    getAllKeysInSharedStorage( client, keystore, res, includePublicKeys);
+                    getAllKeysInSharedStorage( logger, keystore, includePrivateKeys, res );
                 } else {
-                    sendResponse( res, keystore, includePublicKeys );
+                    sendResponse( res, keystore, includePrivateKeys );
                 }
             });
         } else {
-            sendResponse( res, keystore, includePublicKeys );
+            sendResponse( res, keystore, includePrivateKeys );
         }
     };
 }
 
 
-function getAllKeysInSharedStorage( client, keystore, res, includePublicKeys ){
-    client.hgetall( "encryptionBusyBox::keystore", function (err, keys) {
-        console.log( "Getting all Keys from REDIS ... ");
-        if (err) console.log('REDIS/YEDIS: Error Getting All Keys : ', err);
+function getAllKeysInSharedStorage( logger, keystore, includePrivateKeys, res ){
+    //Parameters are in the order of how optional they are
+    keystore.shared.hgetall( "encryptionBusyBox::keystore", function (err, keys) {
+        let allKeys = [];
+
         for( let index in keys) {
-          console.log( "Key ID: ", index);
-          keystore.add( keys[ index ] );
+            let key = JSON.parse( keys[index] );
+            keystore.local.add( key );
+            allKeys.push( key );
         }
-        sendResponse( res, keystore, includePublicKeys );
+
+        logger.info( {
+            message: {
+                operation: "GET ALL keys from REDIS",
+                error: err,
+                keys: allKeys
+            }
+        });
+
+        sendResponse(  res, keystore, includePrivateKeys );
     });    
 }
 
-
-function sendResponse( res, keystore, includePublicKeys ){
-    if ( res ){
-        console.log( "\nSending Response  : ", JSON.stringify( keystore.toJSON(), undefined, 4 ) );
-        res.send( keystore.toJSON( includePublicKeys ) );    
-    }
+function sendResponse( res, keystore, includePrivateKeys ){
+    if ( res ) res.send( keystore.local.toJSON( includePrivateKeys ) );    
 }
 
 module.exports = {
