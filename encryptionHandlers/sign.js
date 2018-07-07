@@ -4,13 +4,8 @@
  * Express handlers for signing a JSON Web Token
  *
  */
-
-const { logRequest } = require( '../utilities/logRequest' );
-
 function getSigningHandler( jose ) {
     return function( req, res ) {
-        //logRequest( req );
-
         if ( !req.body.signingKey ) {
             res.send( {
                 message: "The Signing Key is missing"
@@ -34,8 +29,10 @@ function getSigningHandler( jose ) {
                     .then( function( jwsResponse ) {
                         // {result} is a JSON object -- JWS using the JSON General Serialization
                         res.send( jwsResponse );
-                    } );
-            } );
+                    } 
+                );
+            } 
+        );
     };
 }
 

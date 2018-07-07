@@ -12,7 +12,6 @@ exports.getIp4Interfaces = function() {
                 continue;
             }
             ip4Interfaces.push( subInterface.address );
-            ++alias;
         }
     }
     return ip4Interfaces;
