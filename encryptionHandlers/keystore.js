@@ -27,19 +27,19 @@ function initialize( appLogger ){
 
     //If there is a REDIS or YEDIS instance available then use that as our keystore otherwise operate locally
     client = redisDriver.createClient();
-    client.on('ready', resetConnectionAttempts.bind(this));
-    client.on('error', handleUnCaughtConnectionError.bind(this) );
+    client.on('ready', resetConnectionAttempts );
+    client.on('error', handleUnCaughtConnectionError );
     return keystore;
 }
 
 function getAllKeysInSharedStorage( includePrivateKeys, callback ){
-    if ( !client.ready || !client.connected ) callback.send( new Error('Shared Keystore unavailable') );
+    if ( !client.ready || !client.connected ) callback( new Error('Shared Keystore unavailable') );
     else {
         client.hgetall( "encryptionBusyBox::keystore", processRedisKeys );    
     }
     function processRedisKeys(err, keys) {
         if ( err ) {
-            callback.send( err );
+            callback( err );
         } else {
             let jwkKeySet = [];
             for( let index in keys) {
@@ -58,7 +58,7 @@ function getAllKeysInSharedStorage( includePrivateKeys, callback ){
                     keyCount: allKeys.length
                 }
             });
-            callback.send( allKeys );    
+            callback( allKeys );    
         }
     }
 }
@@ -66,7 +66,7 @@ function getAllKeysInSharedStorage( includePrivateKeys, callback ){
 
 function toJSON( includePrivateKeys, callback ) {
     if (shouldOperateStandalone) {
-        callback.send( standaloneKeystore.toJSON( includePrivateKeys) );
+        callback( standaloneKeystore.toJSON( includePrivateKeys) );
     } else {
         getAllKeysInSharedStorage( includePrivateKeys, callback);
     }
@@ -76,7 +76,7 @@ function generate( type, size, props, callback ){
     if (shouldOperateStandalone ) ks = standaloneKeystore;
     else {
         ks = jose.JWK.createKeyStore();
-        if ( !client.ready || !client.connected ) callback.send( new Error('Shared Keystore unavailable') );
+        if ( !client.ready || !client.connected ) callback( new Error('Shared Keystore unavailable') );
     }
     ks.generate( type, size, props ).then( marshalKeys);
 
@@ -86,7 +86,7 @@ function generate( type, size, props, callback ){
             algorithms: keyPair.algorithms()
         };
         if (shouldOperateStandalone) {
-            callback.send( results );
+            callback( results );
         } else {
             client.hset( "encryptionBusyBox::keystore", results.key.kid, JSON.stringify( results.key ), returnKeyIfSuccessfullySaved);
         }
@@ -101,21 +101,22 @@ function generate( type, size, props, callback ){
                 }
             });
             if ( err ) {
-                callback.send( err );
+                callback( err );
             } else {
-                callback.send( results );
+                callback( results );
             }
         }    
     }
 }
 
-function logConnectionStatus( level, msg ){
+function logConnectionStatus( level, msg, err ){
     logger[level]( {
         message: {
             operation: msg,
             connectionAttempts: connectionAttempts,
             hasLocalhostRedisFailed: hasLocalhostRedisFailed,
             hasExternalRedisFailed: hasExternalRedisFailed,
+            shouldOperateStandalone: shouldOperateStandalone,
             clientDetails: {
                 address: client.address,
                 connected: client.connected,
@@ -124,18 +125,19 @@ function logConnectionStatus( level, msg ){
                 retry_delay: client.retry_delay,
                 eventCount: client._eventsCount,
                 server_info: client.server_info
-            }
+            },
+            err
         }
     });
 }
 
 function resetConnectionAttempts(){
     connectionAttempts = 0;
-    logConnectionStatus( "info", "Successfully Connected to REDIS");
+    logConnectionStatus( "info", "Successfully Connected to REDIS", null);
 }
 
 function handleUnCaughtConnectionError(err) {
-    if ( err.code === "ECONNREFUSED" && err.syscall === "connect"){
+    if ( ( err.code === "ECONNREFUSED" && err.syscall === "connect") || (err.code === "ENOTFOUND") ){
         connectionAttempts++;
         if ( connectionAttempts >= 5 ){
             if ( !hasLocalhostRedisFailed ){
@@ -144,19 +146,20 @@ function handleUnCaughtConnectionError(err) {
                 client.quit();
                 client = redisDriver.createClient({ host: "redis"});
                 client.on('ready', resetConnectionAttempts.bind(this));
-                logConnectionStatus( "info", "Retrying with External REDIS Server");
+                client.on('error', handleUnCaughtConnectionError );
+                logConnectionStatus( "info", "Retrying with External REDIS Server", err);
             } else {
                 hasExternalRedisFailed = true;
                 shouldOperateStandalone = true;
                 client.quit();
                 client = { connected: false, ready: false };
-                logConnectionStatus( "error", "Failed to Connect to External REDIS Server");
+                logConnectionStatus( "error", "Failed to Connect to External REDIS Server", err );
             }
         } else {
-            logConnectionStatus( "info", "Retrying REDIS / YEDIS Connection");
+            logConnectionStatus( "info", "Retrying REDIS / YEDIS Connection", err );
         }
     } else {
-        logConnectionStatus( "error", "General REDIS / YEDIS Error");
+        logConnectionStatus( "error", "General REDIS / YEDIS Error", err );
     }
 }
 

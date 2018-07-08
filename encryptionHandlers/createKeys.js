@@ -11,7 +11,14 @@ function getKeyCreationHandler( keystore ) {
         let type = req.body.kty || "RSA";
         let props = {};
         if ( req.body.use ) props.use = req.body.use;
-        keystore.generate( type, size, props, res );
+        keystore.generate( type, size, props, sendResponse );
+
+        //Directly sending res.send causes scoping issues
+        //having the keystore know to call the send method is tight coupling
+        function sendResponse( keys ){
+            res.send( keys);
+        }
+
     };
 }
 
