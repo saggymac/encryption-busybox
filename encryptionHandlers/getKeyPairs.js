@@ -8,13 +8,14 @@ function getKeyPairHandler( keystore, includePrivateKeys ) {
     return function( req, res ) {
         keystore.toJSON( includePrivateKeys, sendResponse );
 
-        //Directly sending res.send causes scoping issues
-        //having the keystore know to call the send method is tight coupling
-        function sendResponse( keys ){
-            res.send( keys);
+        function sendResponse( err, keys ){
+            if ( err ){
+                res.status(424).send( { keys:[], error: err.message });
+            } else {
+                res.send(  keys  );
+            }
         }
     };
 }
-
 
 module.exports = getKeyPairHandler;

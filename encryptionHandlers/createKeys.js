@@ -13,12 +13,13 @@ function getKeyCreationHandler( keystore ) {
         if ( req.body.use ) props.use = req.body.use;
         keystore.generate( type, size, props, sendResponse );
 
-        //Directly sending res.send causes scoping issues
-        //having the keystore know to call the send method is tight coupling
-        function sendResponse( keys ){
-            res.send( keys);
+        function sendResponse( err, key ){
+            if ( err ){
+                res.status(424).send( { key:{}, algorithms:[], error: err.message });
+            } else {
+                res.send( key );
+            }
         }
-
     };
 }
 

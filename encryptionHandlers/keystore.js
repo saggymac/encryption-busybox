@@ -33,13 +33,13 @@ function initialize( appLogger ){
 }
 
 function getAllKeysInSharedStorage( includePrivateKeys, callback ){
-    if ( !client.ready || !client.connected ) callback( new Error('Shared Keystore unavailable') );
+    if ( !client.ready || !client.connected ) callback( new Error('Shared Keystore unavailable'), null );
     else {
         client.hgetall( "encryptionBusyBox::keystore", processRedisKeys );    
     }
     function processRedisKeys(err, keys) {
         if ( err ) {
-            callback( err );
+            callback( err, null );
         } else {
             let jwkKeySet = [];
             for( let index in keys) {
@@ -58,7 +58,7 @@ function getAllKeysInSharedStorage( includePrivateKeys, callback ){
                     keyCount: allKeys.length
                 }
             });
-            callback( allKeys );    
+            callback( null, allKeys );    
         }
     }
 }
@@ -66,7 +66,7 @@ function getAllKeysInSharedStorage( includePrivateKeys, callback ){
 
 function toJSON( includePrivateKeys, callback ) {
     if (shouldOperateStandalone) {
-        callback( standaloneKeystore.toJSON( includePrivateKeys) );
+        callback( null, standaloneKeystore.toJSON( includePrivateKeys) );
     } else {
         getAllKeysInSharedStorage( includePrivateKeys, callback);
     }
@@ -75,8 +75,11 @@ function toJSON( includePrivateKeys, callback ) {
 function generate( type, size, props, callback ){
     if (shouldOperateStandalone ) ks = standaloneKeystore;
     else {
+        if ( !client.ready || !client.connected ) {
+            callback( new Error('Shared Keystore unavailable'), null );
+            return;
+        }
         ks = jose.JWK.createKeyStore();
-        if ( !client.ready || !client.connected ) callback( new Error('Shared Keystore unavailable') );
     }
     ks.generate( type, size, props ).then( marshalKeys);
 
@@ -86,7 +89,7 @@ function generate( type, size, props, callback ){
             algorithms: keyPair.algorithms()
         };
         if (shouldOperateStandalone) {
-            callback( results );
+            callback( null, results );
         } else {
             client.hset( "encryptionBusyBox::keystore", results.key.kid, JSON.stringify( results.key ), returnKeyIfSuccessfullySaved);
         }
@@ -101,9 +104,9 @@ function generate( type, size, props, callback ){
                 }
             });
             if ( err ) {
-                callback( err );
+                callback( err, null );
             } else {
-                callback( results );
+                callback( null, results );
             }
         }    
     }
@@ -137,7 +140,7 @@ function resetConnectionAttempts(){
 }
 
 function handleUnCaughtConnectionError(err) {
-    if ( ( err.code === "ECONNREFUSED" && err.syscall === "connect") || (err.code === "ENOTFOUND") ){
+    if ( ( err.code === "ECONNREFUSED" && err.syscall === "connect") || (err.code === "ENOTFOUND")  ){
         connectionAttempts++;
         if ( connectionAttempts >= 5 ){
             if ( !hasLocalhostRedisFailed ){
