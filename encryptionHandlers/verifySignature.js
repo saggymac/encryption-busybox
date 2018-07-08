@@ -14,7 +14,8 @@ function getSignatureVerifyingHandler( jose ) {
             try {
                 jose.JWK.asKey( req.body.publicKey )
                     .then( function( publicKey ) {
-                        jose.JWS.createVerify( publicKey )
+                        jose.JWS
+                            .createVerify( publicKey )
                             .verify( req.body.message )
                             .then( function( result ) {
                                 r = result;
@@ -23,15 +24,13 @@ function getSignatureVerifyingHandler( jose ) {
                                 res.send( r );
                             } 
                         );
-                    } 
+                    }
                 );
             } catch ( err ) {
                 res.send( { message: "Message Signature Verification Failed" } );
-            }    
+            }
         }
     };
 }
 
-module.exports = {
-    getSignatureVerifyingHandler: getSignatureVerifyingHandler
-};
+module.exports = getSignatureVerifyingHandler;

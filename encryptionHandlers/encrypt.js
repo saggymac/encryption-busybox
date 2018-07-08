@@ -17,10 +17,9 @@ function getEncryptionHandler( jose ) {
             .final()
             .then( function( jweResult ) {
                 res.send( jweResult );
-            });
+            }
+        );
     };
 }
 
-module.exports = {
-    getEncryptionHandler: getEncryptionHandler
-};
+module.exports = getEncryptionHandler;

@@ -29,6 +29,4 @@ function getKeyDerivationHandler( jose ) {
     };
 }
 
-module.exports = {
-    getKeyDerivationHandler: getKeyDerivationHandler
-};
+module.exports = getKeyDerivationHandler;

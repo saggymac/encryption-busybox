@@ -32,7 +32,7 @@ const logger = new winston.Logger ({ transports: [ winstonTransport ] });
 
 const { whereAmI } = require( './utilities/whereAmI' );
 let routeHandlers = require( './encryptionHandlers' );
-routeHandlers = routeHandlers.getExpressRouteHandlers(logger);
+routeHandlers = routeHandlers(logger);
 
 // Setup Express Middleware handlers
 app.use( bodyParser.json() );
