@@ -65,4 +65,15 @@ app.use(expressWinston.errorLogger({
 }));
 
 // Start the server and listen for requests
-app.listen( 3000 );
+var expressJsServerHandle = app.listen( 3000 );
+
+// when a shutdown signal is received, do graceful shutdown
+process.on( 'SIGINT', gracefulShutdown);
+process.on( 'SIGTERM', gracefulShutdown);
+
+function gracefulShutdown(){
+  expressJsServerHandle.close( function(){
+    logger.info( { message: "Shutdown signal received. Shutting down." });
+    process.exit();
+  });
+}
