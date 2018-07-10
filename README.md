@@ -56,16 +56,22 @@
     * POST '/signature'              - Creates a JWS from the supplied message.
     * POST '/verification'           - Checks if a signature is valid.
 
-## Creating the Docker container
+## I just want to run it
+
+    docker run -d -p 3000:3000 --rm --name local-ebb junkmail4mjd/encryption-busybox:0.2.2
+
+    or
+
+    ./run.sh
+
+## Modifying the code and creating a Docker container of your own
 
     1.  Clone the repo
     2.  Change directories into the cloned directory
-    3.  npm install
-    4.  npm install -g pkg
-    5.  pkg . --output docker/encryption-busybox-linux
-    6.  cd docker
-    7.  docker build -t <your_container_name> .
-    8.  docker run -d -p 3000:3000 <your_container_name>
-    9.  Test APIs with curl, Postman or other tool of choice
-    10. docker tag <your_container_name> <your_user_ID>/<your_container_name>:<your_version>
-    11. docker push <your_user_ID>/<your_container_name>:<your_version>
+    3.  run ./install-pkg.sh to install the node binary packager
+    4.  run ./build-docker-image.sh to create a local image
+    5.  Test APIs with curl, Postman or other tool of choice (use the sample postman collection encryption-busybox.postman_collection.json)
+    6.  Edit the code to your choosing
+    7.  repeat 4 to update the container
+    8.  create a container for your own docker-hub account --- docker tag <your_container_name> <your_user_ID>/<your_container_name>:<your_version>
+    9.  push the container to your own docker-hub account docker push <your_user_ID>/<your_container_name>:<your_version>
