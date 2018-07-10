@@ -7,7 +7,7 @@
 
     1.  Generate Signing Key pair (POST '/encryption/key-pairs' with parameters describing the type of key you would like generated)
     2.  Create a JSON Web Token that you are interested in Signing
-        <PRE>  
+
               {
                 "iss": "https://api.capitalone.com/",
                 "sub": "Unique_Identifier_For_User",
@@ -18,7 +18,7 @@
                 "jti": "0123456789",
                 "custom claim": "Sensitive customer information that the requestor wanted"
               }
-        </PRE>  
+
     3.  Sign the JWT to create a JWS (POST '/signature' with the key and JWT that you would like to be signed)
     4.  Generate an Encryption key for creating the JWE (POST '/encryption/key-pairs' with parameters describing the type of key you would like generated)
     5.  Create a JWE (POST '/ciphertext' with the key, payload and parameters describing the type of JWE that you would like generated)
@@ -46,15 +46,15 @@
 
     The Encryption-Busybox has the following endpoints
 
-    * <PRE>GET  '/whereAmI'               - Displays information about local server and environment.</PRE>
-    * <PRE>GET  '/encryption/public-keys' - Returns all of the public keys in the key store.</PRE><
-    * <PRE>GET  '/encryption/key-pairs'   - Returns both the public and private key pairs in the key store.</PRE>
-    * <PRE>POST '/encryption/key-pairs'   - Creates a keypair, stores it in the key store and then returns it.</PRE>
-    * <PRE>POST '/algorithms/hkdf'        - Expands the supplied key material and derives a key from it.</PRE>
-    * <PRE>POST '/plaintext'              - Decrypts a JWE and returns the plain text contents.</PRE>
-    * <PRE>POST '/ciphertext'             - Encrypts the supplied plain text and creates a JWE.</PRE>
-    * <PRE>POST '/signature'              - Creates a JWS from the supplied message.</PRE>
-    * <PRE>POST '/verification'           - Checks if a signature is valid.</PRE>
+    * GET  '/whereAmI'               - Displays information about local server and environment.
+    * GET  '/encryption/public-keys' - Returns all of the public keys in the key store.
+    * GET  '/encryption/key-pairs'   - Returns both the public and private key pairs in the key store.
+    * POST '/encryption/key-pairs'   - Creates a keypair, stores it in the key store and then returns it.
+    * POST '/algorithms/hkdf'        - Expands the supplied key material and derives a key from it.
+    * POST '/plaintext'              - Decrypts a JWE and returns the plain text contents.
+    * POST '/ciphertext'             - Encrypts the supplied plain text and creates a JWE.
+    * POST '/signature'              - Creates a JWS from the supplied message.
+    * POST '/verification'           - Checks if a signature is valid.
 
 ## Creating the Docker container
 
