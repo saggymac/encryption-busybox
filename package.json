@@ -19,5 +19,14 @@
   "jshintConfig": {
     "node": true,
     "esversion": 6
+  },
+  "bin": "app.js",
+  "pkg": {
+    "assets": [
+      "static/**/*"
+    ],
+    "targets": [
+      "node9-linux-x64"
+    ]
   }
 }

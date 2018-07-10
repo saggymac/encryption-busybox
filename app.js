@@ -36,7 +36,7 @@ routeHandlers = routeHandlers(logger);
 
 // Setup Express Middleware handlers
 app.use( bodyParser.json() );
-app.use( express.static( 'static' ) );
+app.use( express.static( __dirname + '/static' ) );
 
 app.use(expressWinston.logger({
     transports: [
