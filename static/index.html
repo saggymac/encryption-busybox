@@ -7,20 +7,132 @@
 
 <body>
   <h1>Encryption BusyBox</h1>
-  <br><br><br><br>
-  <p><strong>Available API Endpoints:</strong></p>
   <p></p>
 
   <ul>
-    <li><PRE>GET  '/whereAmI'               - Displays information about local server and environment.</PRE></li>
-    <li><PRE>GET  '/encryption/public-keys' - Returns all of the public keys in the key store.</PRE></li>
-    <li><PRE>GET  '/encryption/key-pairs'   - Returns both the public and private key pairs in the key store.</PRE></li>
-    <li><PRE>POST '/encryption/key-pairs'   - Creates a keypair, stores it in the key store and then returns it.</PRE></li>
-    <li><PRE>POST '/algorithms/hkdf'        - Expands the supplied key material and derives a key from it.</PRE></li>
-    <li><PRE>POST '/plaintext'              - Decrypts a JWE and returns the plain text contents.</PRE></li>
-    <li><PRE>POST '/ciphertext'             - Encrypts the supplied plain text and creates a JWE.</PRE></li>
-    <li><PRE>POST '/signature'              - Creates a JWS from the supplied message.</PRE></li>
-    <li><PRE>POST '/verification'           - Checks if a signature is valid.</PRE></li>
+    <li>Encryption BusyBox is a simple tool that demonstrates encryption libraries for creating JSON Web Tokens, JWS and JWE Tokens</li>
+    <li>It can be used locally, run inside a docker container or deployed in a scalable fashion inside Kubernetes</li>
   </ul>
+
+  <br><br>
+  <h2>A simple realistic usage of the encryption-busybox APIs to learn about JWT, JWS, JWE, JWA, and JWK standards by creating a JWE</h2>
+
+  <ol>
+    <li>Generate Signing Key pair (POST '/encryption/key-pairs' with parameters describing the type of key you would like generated)</li>
+    <li>Create a JSON Web Token that you are interested in Signing
+      <pre>
+        {
+          "iss": "https://api.capitalone.com/",
+          "sub": "Unique_Identifier_For_User",
+          "aud": "Audience i.e. intended Token Recipient",
+          "exp": "1541244893",
+          "nbf": "1531244893",
+          "iat": "1531244872",
+          "jti": "0123456789",
+          "custom claim": "Sensitive customer information that the requestor wanted"
+        }
+      </pre>
+    </li>
+    <li>Sign the JWT to create a JWS (POST '/signature' with the key and JWT that you would like to be signed)</li>
+    <li>Generate an Encryption key for creating the JWE (POST '/encryption/key-pairs' with parameters describing the type of key you would like generated)</li>
+    <li>Create a JWE (POST '/ciphertext' with the key, payload and parameters describing the type of JWE that you would like generated)</li>
+  </ol>
+
+  <br><br>
+  <h2>The JWE can be decrypted and verified with these steps</h2>
+
+  <ol>
+    <li>Decrypt the JWE (POST '/plaintext' with the JWE, and the key to decrypt the JWE)</li>
+    <li>Verify the signature on the JWS (POST '/verification' with the JWS and the public portion of the signing key)</li>
+    <li>Use the JWT data</li>
+  </ol>
+
+
+  <br><br>
+  <h2>Modes of operation</h2>
+
+  <ol>
+    <li>localhost REDIS - The API looks for a REDIS instance on localhost and stores keys there. Multiple API containers can be used to scale the encryption busybox for many users </li>
+    <li>REDIS Server - The API will look for a server named redis and store keys there.</li>
+    <li>Standalone - The API creates an keystore in local memory and keys are only stored that were created on the local machine</li>
+  </ol>
+
+  <br>
+  <h3>Notes:</h3>
+
+  <ul>
+    <li>The API automatically cycles through the Modes of operation above. It tries each REDIS location 5 times before falling back to standalone mode.</li>
+    <li>The API has been tested with REDIS 3 and REDIS 4</li>
+    <li>Additionally it has been tested with a compatible REDIS implementation called YugaByte DB <a href="https://www.yugabyte.com/">https://www.yugabyte.com/</a> </li>
+    <li>A Kubernetes deployment can be made up of any number of API pods and a storage service</li>
+  </ul>
+
+  <br><br>
+  <h2><strong>Available API Endpoints:</strong></h2>
+
+
+  <p>The Encryption-Busybox has the following endpoints. <a href="swagger-spec.html">Details are located on the Swagger Spec page.</a> </p>
+
+  <ul>
+    <li>
+      <PRE>GET  '/whereAmI'               - Displays information about local server and environment.</PRE>
+    </li>
+    <li>
+      <PRE>GET  '/encryption/public-keys' - Returns all of the public keys in the key store.</PRE>
+    </li>
+    <li>
+      <PRE>GET  '/encryption/key-pairs'   - Returns both the public and private key pairs in the key store.</PRE>
+    </li>
+    <li>
+      <PRE>POST '/encryption/key-pairs'   - Creates a keypair, stores it in the key store and then returns it.</PRE>
+    </li>
+    <li>
+      <PRE>POST '/algorithms/hkdf'        - Expands the supplied key material and derives a key from it.</PRE>
+    </li>
+    <li>
+      <PRE>POST '/plaintext'              - Decrypts a JWE and returns the plain text contents.</PRE>
+    </li>
+    <li>
+      <PRE>POST '/ciphertext'             - Encrypts the supplied plain text and creates a JWE.</PRE>
+    </li>
+    <li>
+      <PRE>POST '/signature'              - Creates a JWS from the supplied message.</PRE>
+    </li>
+    <li>
+      <PRE>POST '/verification'           - Checks if a signature is valid.</PRE>
+    </li>
+  </ul>
+
+  <br><br>
+  <h2>Easiest Way to Run the API:</h2>
+
+  <ul>
+
+    <li><pre>docker run -d -p 3000:3000 --rm --name local-ebb junkmail4mjd/encryption-busybox:0.2.2</pre></li>
+
+    <p>or</p>
+
+    <li><pre>./run.sh</pre></li>
+  </ul>
+
+  <br><br>
+  <h2>Modifying the code and creating a Docker container of your own:</h2>
+
+  <ol>
+    <li>Clone the repo </li>
+    <li>Change directories into the cloned directory</li>
+    <li>run <pre>./install-pkg.sh</pre> to install the node binary packager </li>
+    <li>run <pre>./build-docker-image.sh</pre> to create a local image </li>
+    <li>Test APIs with curl, Postman or other tool of choice (use the sample postman collection encryption-busybox.postman_collection.json)</li>
+    <li>Edit the code to your choosing </li>
+    <li>repeat 4 to update the container</li>
+    <li>create a container for your own docker-hub account --- <pre>docker tag &ltyour_container_name&gt &ltyour_user_ID&gt/&ltyour_container_name>:&ltyour_version&gt</pre></li>
+    <li>push the container to your own docker-hub account <pre>docker push &ltyour_user_ID&gt/&ltyour_container_name&gt:&ltyour_version&gt</pre></li>
+  </ol>
+
+  <br><br>
+  <br><br>
+
 </body>
+
 </html>
