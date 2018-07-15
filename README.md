@@ -9,7 +9,7 @@
     2.  Create a JSON Web Token that you are interested in Signing
 
               {
-                "iss": "https://api.capitalone.com/",
+                "iss": "https://api.example.com/",
                 "sub": "Unique_Identifier_For_User",
                 "aud": "Audience i.e. intended Token Recipient",
                 "exp": "1541244893",
