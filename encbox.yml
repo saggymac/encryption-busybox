@@ -1,0 +1,9 @@
+provider:
+  name: faas
+  gateway: http://35.196.135.201:8080
+
+functions:
+  encbox:
+    lang: node8-express
+    handler: ./encbox
+    image: saggymac/encbox:latest

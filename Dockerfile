@@ -1,25 +1,60 @@
-# -------------------------------
-FROM node:9.2 AS baseimage
-RUN npm install -g pkg@4.3.1
-RUN npm install -g api2swagger
-RUN npm install -g newman
+FROM node:8.9.4-alpine
+
+RUN addgroup -S app && adduser -S -g app app
+
+# Alternatively use ADD https:// (which will not be cached by Docker builder)
+RUN apk --no-cache add curl \
+    && echo "Pulling watchdog binary from Github." \
+    && curl -sSLf https://github.com/openfaas-incubator/of-watchdog/releases/download/0.4.0/of-watchdog > /usr/bin/fwatchdog \
+    && chmod +x /usr/bin/fwatchdog \
+    && apk del curl --no-cache
+
+WORKDIR /root/
+
+# Turn down the verbosity to default level.
+ENV NPM_CONFIG_LOGLEVEL warn
+
+RUN mkdir -p /home/app
+
+# Wrapper/boot-strapper
+WORKDIR /home/app
+COPY package.json ./
+
+# This ordering means the npm installation is cached for the outer function handler.
+RUN npm i
+
+# Copy outer function handler
+COPY index.js ./
+
+# COPY function node packages and install, adding this as a separate
+# entry allows caching of npm install
+WORKDIR /home/app/function
+COPY function/*.json ./
+RUN npm i || :
+
+# COPY function files and folders
+COPY function/ ./
+
+# Set correct permissions to use non root user
+WORKDIR /home/app/
+
+# chmod for tmp is for a buildkit issue (@alexellis)
+RUN chown app:app -R /home/app \
+    && chmod 777 /tmp
+
+USER app
+
+ENV cgi_headers="true"
+ENV fprocess="node app.js"
+ENV mode="http"
+ENV upstream_url="http://127.0.0.1:3000"
+
+ENV exec_timeout="20s" 
+ENV write_timeout="25s" 
+ENV read_timeout="25s" 
+
+HEALTHCHECK --interval=1s CMD [ -e /tmp/.lock ] || exit 1
+
+CMD ["fwatchdog"]
 
 
-# -------------------------------
-FROM baseimage AS dependencies
-WORKDIR /usr/src
-COPY . .
-RUN npm install
-
-# -------------------------------
-FROM dependencies AS buildimage
-WORKDIR /usr/src
-RUN pkg . --output encryption-busybox-linux
-
-#--------------------------------
-FROM ubuntu:18.04 AS final
-EXPOSE 3000
-
-WORKDIR /usr/src
-COPY --from=buildimage /usr/src/encryption-busybox-linux .
-CMD [ "./encryption-busybox-linux" ]
