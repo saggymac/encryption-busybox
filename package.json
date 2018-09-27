@@ -2,25 +2,19 @@
   "name": "encryption-busybox",
   "version": "1.0.0",
   "description": "A busybox that wraps the node-jose library with APIs to demostrate JSON Web Encryption.",
-  "main": "app.js",
+  "main": "main.js",
+  "files" : [
+
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "body-parser": "^1.18.2",
-    "express": "^4.16.3",
-    "express-winston": "^2.5.1",
     "node-jose": "^0.11.0",
-    "redis": "^2.8.0",
-    "winston": "^2.4.3"
+    "redis": "^2.8.0"
   },
-  "jshintConfig": {
-    "node": true,
-    "esversion": 6
-  },
-  "bin": "app.js",
   "pkg": {
     "assets": [
       "static/**/*"

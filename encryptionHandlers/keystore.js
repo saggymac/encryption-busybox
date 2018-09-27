@@ -26,7 +26,7 @@ function initialize( appLogger ){
     logger = appLogger;
 
     //If there is a REDIS or YEDIS instance available then use that as our keystore otherwise operate locally
-    client = redisDriver.createClient();
+    client = redisDriver.createClient( {host:'172.17.0.2'});
     client.on('ready', resetConnectionAttempts );
     client.on('error', handleUnCaughtConnectionError );
     return keystore;
